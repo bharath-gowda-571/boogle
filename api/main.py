@@ -2,7 +2,6 @@ from typing import ItemsView, List
 from fastapi import FastAPI
 from pydantic import BaseModel
 import psycopg2
-# from starlette.routing import Host
 from psycopg2.extras import RealDictCursor
 import time
 
@@ -24,9 +23,9 @@ while True:
 app = FastAPI()
 
 
-
 @app.post("/add_url/")
 async def add_site(site:Site):
+    print(site)
     try:
         cursor.execute("""INSERT INTO url_keywords values (%s,%s,%s)""",(site.url,site.keywords,site.title),)
     except psycopg2.errors.InFailedSqlTransaction:

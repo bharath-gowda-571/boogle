@@ -9,8 +9,8 @@ from itemadapter import ItemAdapter
 import requests
 
 class NewscraperPipeline:
+
     def process_item(self, item, spider):
         print(type(item))
-        res=requests.post("http://localhost:8000/add_url/",json=item)
-        # print(res.status_code)
+        res=requests.post("http://localhost:8000/add_url/",json=item)    
         return item
