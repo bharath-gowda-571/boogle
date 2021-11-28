@@ -121,11 +121,6 @@ class FollowAllSpider(scrapy.Spider):
                     "alt":"",
                     "title":""
                 }
-                
-                # if  i.xpath("@alt").extract():
-                #     img['alt']=list(list(zip(*kw_extractor.extract_keywords(i.xpath("@alt").extract()[0])))[0])
-                # if  i.xpath("@title").extract():
-                #     img['title']=list(list(zip(*kw_extractor.extract_keywords(i.xpath("@title").extract()[0])))[0])
                 URL_REG=r"(https?:\/\/(www\.)?([-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b)([-a-zA-Z0-9()@:%_\+.~#?&//=]*))"
                 if not re.search(URL_REG,i.xpath("@src").extract()[0]):
                     continue

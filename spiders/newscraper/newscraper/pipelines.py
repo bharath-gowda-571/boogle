@@ -12,5 +12,5 @@ class NewscraperPipeline:
 
     def process_item(self, item, spider):
         print(type(item))
-        res=requests.post("http://localhost:8000/add_url/",json=item)    
+        res=requests.post("https://b9s8vxlhv6.execute-api.ap-south-1.amazonaws.com/dev/add_url/",json=item)    
         return item
