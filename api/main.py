@@ -1,10 +1,14 @@
 from typing import ItemsView, List
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from mangum import Mangum
+from starlette.responses import StreamingResponse
+import yake
+import datetime
+from pprint import pprint
 
 class Image(BaseModel):
     link:str
@@ -35,7 +39,6 @@ app = FastAPI()
 
 @app.post("/add_url/")
 async def add_site(site:Site):
-    # print(site)
     try:
         cursor.execute("""INSERT INTO url_keywords values (%s,%s,%s,%s)""",(site.url,site.keywords,site.title,site.datetime),)
     except psycopg2.errors.InFailedSqlTransaction:
@@ -58,6 +61,47 @@ async def add_site(site:Site):
     conn.commit()
     return site
 
+@app.post("/search_data")
+async def search_data(inp:str,page_no:int=1):
+    try:
+        kw_extractor = yake.KeywordExtractor()
+        keywords=kw_extractor.extract_keywords(inp)
+        keywords=list(map(list,keywords))
+        keywords=list(list(zip(*keywords))[0])
+        keywords_set=set(keywords)
+        print(keywords)
+    except IndexError:
+        raise HTTPException(status_code=404,detail="Page Not Found")
+        
+    query_string="SELECT * FROM url_keywords where "+" OR ".join(["%s=any(keywords)"]*len(keywords))
+    cursor.execute(query_string,keywords)
+    data=cursor.fetchall()
+    order_dic={}
+    for i in data:
+        commons=keywords_set.intersection(set(i['keywords']))
+        try:
+            order_dic[len(commons)].append(i)
+        except KeyError:
+            order_dic[len(commons)]=[]
+            order_dic[len(commons)].append(i)
+
+    rev_sort_keys=list(order_dic.keys())
+    rev_sort_keys.sort(reverse=True)
+    final_list=[]
+
+    for l in rev_sort_keys:
+        order_dic[l].sort(reverse=True,key=lambda x:datetime.datetime.strptime(x['datetime'],"%Y-%m-%d %H:%M:%S")if x['datetime']!="None" else datetime.datetime.min) 
+        
+        final_list+=order_dic[l]
+    
+    order_dic.clear()
+    return_data=final_list[(page_no-1)*10:page_no*10]
+    if len(return_data)==0:
+        raise HTTPException(status_code=404,detail="Page Not Found")
+    return {
+            "keywords":keywords,
+            "results":return_data
+            }
 
 
 handler=Mangum(app)

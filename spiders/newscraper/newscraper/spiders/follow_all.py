@@ -14,11 +14,13 @@ class FollowAllSpider(scrapy.Spider):
     name = 'follow_all'
     # allowed_domains=['timesnownews.com']
     # start_urls=['https://www.timesnownews.com/']
-    allowed_domains = ['theprint.in','indianexpress.com','ndtv.com','timesofindia.indiatimes.com','indiatoday.in','thehindu.com','scroll.in','hindustantimes.com','telegraphindia.com','timesnownews.com',"sportstar.thehindu.com"]
-    start_urls = ['https://theprint.in/','https://indianexpress.com/','https://www.ndtv.com/','https://timesofindia.indiatimes.com/','https://www.indiatoday.in/','https://www.thehindu.com/','https://scroll.in/','https://www.hindustantimes.com/','https://www.telegraphindia.com/','https://www.timesnownews.com/','https://sportstar.thehindu.com/']
+    # allowed_domains = ['theprint.in','indianexpress.com','ndtv.com','timesofindia.indiatimes.com','indiatoday.in','thehindu.com','scroll.in','hindustantimes.com','telegraphindia.com','timesnownews.com',"sportstar.thehindu.com"]
+    # start_urls = ['https://theprint.in/','https://indianexpress.com/','https://www.ndtv.com/','https://timesofindia.indiatimes.com/','https://www.indiatoday.in/','https://www.thehindu.com/','https://scroll.in/','https://www.hindustantimes.com/','https://www.telegraphindia.com/','https://www.timesnownews.com/','https://sportstar.thehindu.com/']
 
-    def __init__(self):
-        self.links=[]
+    def __init__(self,domain,*args, **kwargs):
+        super(FollowAllSpider, self).__init__(*args, **kwargs)
+        self.allowed_domains=[domain]
+        self.start_urls=["https://"+domain+"/"]
 
     def get_datetime_from_site(self,response):
         
@@ -91,7 +93,7 @@ class FollowAllSpider(scrapy.Spider):
         return links
 
     def parse(self, response):
-        self.links.append(response.url)
+        # self.links.append(response.url)
         soup = BeautifulSoup(response.text,'html.parser')
         try:
             text=soup.get_text().strip()
