@@ -8,6 +8,7 @@ from mangum import Mangum
 from starlette.responses import StreamingResponse
 import yake
 import datetime
+from fastapi.middleware.cors import CORSMiddleware
 from pprint import pprint
 
 class Image(BaseModel):
@@ -37,6 +38,16 @@ while True:
 app = FastAPI()
 
 
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.post("/add_url/")
 async def add_site(site:Site):
     try:
@@ -61,7 +72,7 @@ async def add_site(site:Site):
     conn.commit()
     return site
 
-@app.post("/search_data")
+@app.get("/search_data")
 async def search_data(inp:str,page_no:int=1):
     try:
         kw_extractor = yake.KeywordExtractor()
@@ -94,14 +105,20 @@ async def search_data(inp:str,page_no:int=1):
         
         final_list+=order_dic[l]
     
+
     order_dic.clear()
+    print(len(final_list))
     return_data=final_list[(page_no-1)*10:page_no*10]
     if len(return_data)==0:
         raise HTTPException(status_code=404,detail="Page Not Found")
     return {
             "keywords":keywords,
-            "results":return_data
+            "total":len(return_data),
+            "results":return_data,
+
             }
 
+
+app.get
 
 handler=Mangum(app)
