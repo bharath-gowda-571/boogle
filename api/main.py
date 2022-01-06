@@ -4,7 +4,6 @@ from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
-from mangum import Mangum
 from starlette.responses import StreamingResponse
 import yake
 import datetime
@@ -84,7 +83,8 @@ async def search_data(inp:str,page_no:int=1):
     except IndexError:
         raise HTTPException(status_code=404,detail="Page Not Found")
         
-    query_string="SELECT * FROM url_keywords where "+" OR ".join(["%s=any(keywords)"]*len(keywords))
+    query_string="SELECT * FROM all_data where ("+" OR ".join(["%s=any(keywords)"]*len(keywords)) + ") AND ALT LIKE '%%" + "%%".join(keywords[0].split()) + "%%'"
+    print(query_string)  
     cursor.execute(query_string,keywords)
     data=cursor.fetchall()
     order_dic={}
@@ -120,5 +120,3 @@ async def search_data(inp:str,page_no:int=1):
 
 
 app.get
-
-handler=Mangum(app)
