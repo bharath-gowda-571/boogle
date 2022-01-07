@@ -84,7 +84,6 @@ async def search_data(inp:str,page_no:int=1):
         raise HTTPException(status_code=404,detail="Page Not Found")
         
     query_string="SELECT * FROM all_data where ("+" OR ".join(["%s=any(keywords)"]*len(keywords)) + ") AND ALT LIKE '%%" + "%%".join(keywords[0].split()) + "%%'"
-    print(query_string)  
     cursor.execute(query_string,keywords)
     data=cursor.fetchall()
     order_dic={}
@@ -118,5 +117,18 @@ async def search_data(inp:str,page_no:int=1):
 
             }
 
+@app.get("/autocomplete")
+async def autocomplete(query:str):  
+    query_string="SELECT * FROM KEYWORDS WHERE WORDS LIKE "+ "'"+ query + "%%'"
+    cursor.execute(query_string)
+    data=cursor.fetchall()
+    keywordList = []
+    for i in data:
+        keywordList.append(i["words"])
+    return {
+        "total":len(keywordList),
+        "keywords":keywordList   
+    }
+    
 
 
