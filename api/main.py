@@ -119,4 +119,4 @@ async def search_data(inp:str,page_no:int=1):
             }
 
 
-app.get
+
