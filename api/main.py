@@ -9,7 +9,7 @@ import yake
 import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from pprint import pprint
-
+import utils
 class Image(BaseModel):
     link:str
     alt:str
@@ -119,16 +119,18 @@ async def search_data(inp:str,page_no:int=1):
 
 @app.get("/autocomplete")
 async def autocomplete(query:str):  
-    query_string="SELECT * FROM KEYWORDS WHERE WORDS LIKE "+ "'"+ query + "%%'"
-    cursor.execute(query_string)
+    query_string="SELECT * FROM KEYWORDS WHERE WORDS LIKE %s"
+    cursor.execute(query_string,(query+"%%",))
     data=cursor.fetchall()
     keywordList = []
     for i in data:
         keywordList.append(i["words"])
+    keywordList.sort(key=lambda x:utils.count_words(x))
+       
     return {
-        "total":len(keywordList),
-        "keywords":keywordList   
+        "total":len(keywordList[:10]),
+        "keywords":keywordList[:10]   
     }
     
 
-app.get
+
