@@ -107,7 +107,10 @@ async def search_data(inp:str,page_no:int=1):
 
     order_dic.clear()
     print(len(final_list))
-    return_data=final_list[(page_no-1)*10:page_no*10]
+    if(len(final_list)>50):
+        return_data=final_list[(page_no-1)*50:page_no*50]
+    else:
+        return_data=final_list    
     if len(return_data)==0:
         raise HTTPException(status_code=404,detail="Page Not Found")
     return {
