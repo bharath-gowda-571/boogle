@@ -1,5 +1,6 @@
+
 from typing import ItemsView, List
-from fastapi import FastAPI,HTTPException
+from fastapi import FastAPI,HTTPException,status
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -10,6 +11,8 @@ import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from pprint import pprint
 import utils
+from passlib.context import CryptContext
+
 class Image(BaseModel):
     link:str
     alt:str
@@ -22,6 +25,19 @@ class Site(BaseModel):
     datetime:str
     images:List[Image]
 
+class SignUp(BaseModel):
+    name:str
+    email:str
+    password:str
+
+
+class History(BaseModel):
+    query:str
+    user_id:str
+
+class Login(BaseModel):
+    email:str
+    password:str
 
 while True:
     try:
@@ -83,7 +99,8 @@ async def search_data(inp:str,page_no:int=1):
     except IndexError:
         raise HTTPException(status_code=404,detail="Page Not Found")
         
-    query_string="SELECT * FROM all_data where ("+" OR ".join(["%s=any(keywords)"]*len(keywords)) + ") AND ALT LIKE '%%" + "%%".join(keywords[0].split()) + "%%'"
+    query_string="SELECT * FROM all_data where ("+" OR ".join(["%s=any(keywords)"]*len(keywords)) + ")"
+    #  AND ALT LIKE '%%" + "%%".join(keywords[0].split()) + "%%'"
     cursor.execute(query_string,keywords)
     data=cursor.fetchall()
     order_dic={}
@@ -106,7 +123,7 @@ async def search_data(inp:str,page_no:int=1):
     
 
     order_dic.clear()
-    print(len(final_list))
+    
     if(len(final_list)>50):
         return_data=final_list[(page_no-1)*50:page_no*50]
     else:
@@ -117,7 +134,6 @@ async def search_data(inp:str,page_no:int=1):
             "keywords":keywords,
             "total":len(return_data),
             "results":return_data,
-
             }
 
 @app.get("/autocomplete")
@@ -136,4 +152,53 @@ async def autocomplete(query:str):
     }
     
 
+pwd_context=CryptContext(schemes=['bcrypt'],deprecated="auto")
+@app.post("/signup")
+def signup(signup:SignUp):
+    hashed_pass=pwd_context.hash(signup.password)
+    cursor.execute("""INSERT INTO USERS (name,email,password) values (%s,%s,%s)""",(signup.name,signup.email,hashed_pass))
+    conn.commit()
+    return "success"
 
+
+@app.post("/login")
+def login(login:Login):
+    cursor.execute("""SELECT * FROM USERS WHERE email=%s""",(login.email,))
+    user=cursor.fetchone()
+    if user:
+        if pwd_context.verify(login.password,user['password']):
+            return user["user_id"]
+        else:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Email or Password Wrong")
+    else:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Email or Password Wrong")
+
+@app.post("/add_history")
+def add_history(data:History):
+    cursor.execute("""
+    INSERT INTO HISTORY (user_id,query) values (%s,%s);
+    """,(data.user_id,data.query))
+    conn.commit()
+    return "success"
+
+@app.get("/get_detial_history")
+def get_detailed_history(user_id:str):
+    cursor.execute("""
+    SELECT * FROM HISTORY WHERE user_id=%s
+    """,(user_id,))
+    history=cursor.fetchall()
+    history.sort(reverse=True,key=lambda x:x['searched_at']) 
+    return history
+
+@app.get("/get_just_history")
+def get_just_history(user_id:str):
+    cursor.execute(
+        """
+        SELECT * from HISTORY WHERE user_id=%s
+        """,(user_id,))
+    history =cursor.fetchall()
+    
+    history.sort(reverse=True,key=lambda x:x['searched_at']) 
+    
+    history=[hist['query'] for hist in history]
+    return history[:20]
