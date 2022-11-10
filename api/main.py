@@ -41,7 +41,7 @@ class Login(BaseModel):
 
 while True:
     try:
-        conn=psycopg2.connect(host='65.2.38.82',database="website_keyword",user='postgres',password="one1000one",cursor_factory=RealDictCursor)
+        conn=psycopg2.connect(host='*******',database="website_keyword",user='postgres',password="********",cursor_factory=RealDictCursor)
         cursor=conn.cursor()
         print("Connection Succesfull")
         break
